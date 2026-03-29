@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Note & Reminder</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <style>
+        .popup-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .popup-note {
+            min-width: 280px;
+            max-width: 360px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            border-left: 6px solid #2563eb;
+            animation: slideIn 0.3s ease;
+        }
+
+        .popup-note h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+
+        .popup-note p {
+            margin: 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <div>
+            <h1>My Note and Reminder</h1>
+        </div>
+
+        <div class="topbar-actions">
+            <a class="btn primary" th:href="@{/notes/new}">+ Create Note</a>
+            <a class="btn secondary" th:href="@{/notifications}">Notifications</a>
+            <a class="btn secondary" th:href="@{/}">Home</a>
+        </div>
+    </div>
+
+    <div class="card search-card">
+        <form th:action="@{/notes}" method="get" class="search-form">
+            <input type="text" name="keyword" th:value="${keyword}" placeholder="Search by title or content">
+            <button type="submit" class="btn primary">Search</button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(notes)}" class="card empty-card">
+        <p>No notes found. Create your first note.</p>
+    </div>
+
+    <div class="notes-grid">
+        <div class="note-card"
+             th:each="note : ${notes}"
+             th:attr="data-note-id=${note.id},
+                      data-note-title=${note.title},
+                      data-note-content=${note.content},
+                      data-reminder-time=${note.reminderTime != null ? #temporals.format(note.reminderTime, 'yyyy-MM-dd''T''HH:mm:ss') : ''}">
+            <div class="note-header">
+                <h3 th:text="${note.title}">Title</h3>
+                <span class="badge" th:if="${note.pinned}">Pinned</span>
+            </div>
+
+            <p class="category" th:if="${note.category != null and !note.category.isEmpty()}">
+                Category: <span th:text="${note.category}"></span>
+            </p>
+
+            <p class="note-content" th:text="${note.content}">Content</p>
+
+            <div class="meta">
+                <p>
+                    <strong>Reminder:</strong>
+                    <span th:text="${note.reminderTime != null ? #temporals.format(note.reminderTime, 'MMM d, yyyy h:mm a') : 'No reminder set'}"></span>
+                </p>
+
+                <p>
+                    <strong>Updated:</strong>
+                    <span th:text="${note.updatedAt != null ? #temporals.format(note.updatedAt, 'MMM d, yyyy h:mm a') : ''}"></span>
+                </p>
+            </div>
+
+            <div class="note-actions">
+                <a class="btn secondary" th:href="@{'/notes/edit/' + ${note.id}}">Edit</a>
+
+                <form th:action="@{'/notes/delete/' + ${note.id}}" method="post"
+                      onsubmit="return confirm('Are you sure you want to delete this note?');">
+                    <button type="submit" class="btn danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popupContainer" class="popup-container"></div>
+
+<div th:replace="~{fragments/reminder-script :: fragment}"></div>
+ </body>
+</html>

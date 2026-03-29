@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Note Reminder App</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+<body>
+<div class="page">
+    <div class="hero-card">
+        <h1>Note & Reminder App</h1>
+        <p class="subtitle">
+            Create notes, edit them, delete them, set reminders, search quickly,
+            and manage your daily tasks in one place.
+        </p>
+
+        <div class="hero-actions">
+            <a class="btn primary" th:href="@{/login}">Log In</a>
+            <a class="btn secondary" th:href="@{/notes}">Open Dashboard</a>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments/reminder-script :: fragment}"></div>
+</body>
+</html>

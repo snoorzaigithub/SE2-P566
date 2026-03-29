@@ -1,0 +1,90 @@
+<th:block th:fragment="fragment">
+    <div id="popupContainer" class="popup-container"></div>
+
+    <script>
+        function showInPagePopup(title, body) {
+            const container = document.getElementById("popupContainer");
+            if (!container) return;
+
+            const popup = document.createElement("div");
+            popup.className = "popup-note";
+
+            const heading = document.createElement("h4");
+            heading.textContent = title;
+
+            const text = document.createElement("p");
+            text.textContent = body && body.trim() !== "" ? body : "Your reminder is due now.";
+
+            popup.appendChild(heading);
+            popup.appendChild(text);
+            container.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 5000);
+        }
+
+        async function showBrowserNotification(title, body) {
+            if (!("Notification" in window)) return;
+
+            try {
+                let permission = Notification.permission;
+
+                if (permission === "default") {
+                    permission = await Notification.requestPermission();
+                }
+
+                if (permission === "granted") {
+                    new Notification(title, {
+                        body: body && body.trim() !== "" ? body : "Your reminder is due now."
+                    });
+                }
+            } catch (e) {
+                console.error("Browser notification failed:", e);
+            }
+        }
+
+        async function checkDueReminders() {
+            try {
+                const response = await fetch("/api/reminders/due", {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error("Reminder API failed:", response.status);
+                    return;
+                }
+
+                const reminders = await response.json();
+                console.log("Due reminders:", reminders);
+
+                if (!Array.isArray(reminders) || reminders.length === 0) {
+                    return;
+                }
+
+                for (const note of reminders) {
+                    const id = note.id;
+                    const title = "Reminder: " + (note.title || "Untitled Note");
+                    const body = note.content || "Your reminder is due now.";
+                    const key = "reminder_shown_" + id;
+
+                    if (!sessionStorage.getItem(key)) {
+                        showInPagePopup(title, body);
+                        await showBrowserNotification(title, body);
+                        sessionStorage.setItem(key, "true");
+                    }
+                }
+            } catch (e) {
+                console.error("Reminder check failed:", e);
+            }
+        }
+
+        window.addEventListener("load", function () {
+            checkDueReminders();
+            setInterval(checkDueReminders, 5000);
+        });
+    </script>
+</th:block>
